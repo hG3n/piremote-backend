@@ -11,42 +11,29 @@ class DBHandler(tornado.web.RequestHandler):
     def initialize(self, api):
         self.db_api = api
 
-    def get(self):
-        message_str = self.get_argument("message")
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
+        self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
 
-        m = Message()
-        m.from_dict(json.loads(message_str))
-        method = m.method
-        data = m.data
+    def get(self):
+        fct = self.get_argument("fct")
 
         answer = Message()
-        if method == "get":
-            item = data["item"]
-            if item == 'receiver':
-                answer = self.get_available_receivers()
-        elif method is "set":
-            item = data["receiver"]
-            field = data["attribute"]
-            if item == 'receiver':
-                if field == "attribute":
-                    answer = self.set_receiver_alias(data)
+        if fct == "get_available_switchables":
+            answer = self.get_available_receivers()
 
-        self.write_message(answer.__dict__)
+        print('sending message')
+        self.write(answer.__dict__)
 
     def post(self):
-        message_str = self.get_argument("message")
+        db_request = json.loads(self.request.body)
+        fct = db_request['function']
 
-        m = Message()
-        m.from_dict(json.loads(message_str))
-        method = m.method
-        data = m.data
+        answer = Message()
+        if fct == 'set_receiver_alias':
+            answer = self.set_receiver_alias(db_request)
 
-        if method == 'set':
-            item = data["receiver"]
-            field = data["attribute"]
-            if item == 'receiver':
-                if field == "attribute":
-                    answer = self.set_receiver_alias(data)
+        self.write(answer.__dict__)
 
     def get_available_receivers(self):
         self.db_api.open()
@@ -67,10 +54,18 @@ class DBHandler(tornado.web.RequestHandler):
     def set_receiver_alias(self, data):
         answer = Message()
 
+        element_id = data['element_id']
+        field = data['field']
+        value = data['value']
+
         self.db_api.open()
-        receiver = self.db_api.select(tables.RFReceiver, tables.RFReceiver.id == data['receiver'])
+        receiver = self.db_api.select(tables.RFReceiver, tables.RFReceiver.id == element_id).first()
         if receiver is not None:
-            receiver.alias = data['alias']
+            if field == 'alias':
+                receiver.alias = value
+
+
+
             self.db_api.commit()
             self.db_api.close()
             answer.success = True

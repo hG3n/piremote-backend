@@ -11,5 +11,5 @@ class RFSender(object):
         # self.device.cleanup()
 
     def transmit(self, signal):
-        print(signal.code, signal.protocol, signal.pulselength)
+        print("Transmitting code: ", signal.code, signal.protocol, signal.pulselength)
         # self.device.tx_code(signal.code, signal.protocol, signal.pulselength)

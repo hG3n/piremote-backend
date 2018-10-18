@@ -86,9 +86,9 @@ def main():
     api = Api(bind=database.base.engine)
     # perform_db_tests(api)
 
-    set_database_to_default(True)
-    create_swtichable_db_entries(api)
-    db_test(api)
+    # set_database_to_default(True)
+    # create_swtichable_db_entries(api)
+    # db_test(api)
 
     ### create sender module
     sender = RFSender(17)

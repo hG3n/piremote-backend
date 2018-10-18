@@ -33,7 +33,6 @@ class InteractionHandler(tornado.websocket.WebSocketHandler):
         if method == "toggle":
             answer = self.toggle_receiver(data)
 
-        print(answer)
         self.write_message(answer.__dict__)
 
     def toggle_receiver(self, data):
@@ -47,7 +46,7 @@ class InteractionHandler(tornado.websocket.WebSocketHandler):
         self.db_api.close()
 
         answer = Message()
-        answer.method = "reload"
+        answer.method = "feedback"
         if signal_obj is not None:
             self.db_api.open()
             receiver_obj = self.db_api.select(tables.RFReceiver, tables.RFReceiver.id == receiver_id).first()
@@ -55,6 +54,7 @@ class InteractionHandler(tornado.websocket.WebSocketHandler):
             if receiver_obj is not None:
                 self.rf_sender.transmit(signal_obj)
                 receiver_obj.state = state
+                answer.data = receiver_obj.as_dict()
                 self.db_api.commit()
                 answer.success = True
             else:
