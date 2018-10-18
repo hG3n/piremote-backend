@@ -13,6 +13,11 @@ from lib.db_handler import DBHandler
 from lib.rf_sender import RFSender
 
 
+class TestHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.write("Hi there")
+
+
 def main():
     # parse command line args
     parser = argparse.ArgumentParser(description='Starts the command line for my house')
@@ -33,7 +38,8 @@ def main():
     # define handlers
     app = tornado.web.Application([
         (r"/interaction", InteractionHandler, dict(api=api, sender=sender)),
-        (r"/db", DBHandler, dict(api=api))
+        (r"/db", DBHandler, dict(api=api)),
+        (r"/", TestHandler)
     ])
 
     ip = "0.0.0.0"
