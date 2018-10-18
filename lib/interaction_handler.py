@@ -22,8 +22,6 @@ class InteractionHandler(tornado.websocket.WebSocketHandler):
         print("InteractionHandler: A client disconnected")
 
     def on_message(self, message):
-        print("received message:", message)
-
         m = Message()
         m.from_dict(json.loads(message))
         method = m.method

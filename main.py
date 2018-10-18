@@ -1,4 +1,4 @@
-import sys, json
+import sys, json, argparse
 
 import tornado.ioloop
 import tornado.web
@@ -12,7 +12,36 @@ from lib.interaction_handler import InteractionHandler
 from lib.db_handler import DBHandler
 from lib.rf_sender import RFSender
 
-PORT = 8888
+
+def main():
+    # parse command line args
+    parser = argparse.ArgumentParser(description='Starts the command line for my house')
+    parser.add_argument('--port', dest='port', type=int, default=None, help="Port to run the application on.")
+    args = parser.parse_args()
+
+    # establish database connection interface
+    api = Api(bind=database.base.engine)
+    # perform_db_tests(api)
+
+    # set_database_to_default(True)
+    # create_swtichable_db_entries(api)
+    # db_test(api)
+
+    ### create sender module
+    sender = RFSender(17)
+
+    # define handlers
+    app = tornado.web.Application([
+        (r"/interaction", InteractionHandler, dict(api=api, sender=sender)),
+        (r"/db", DBHandler, dict(api=api))
+    ])
+
+    ip = "0.0.0.0"
+    print("Starting server on", ip, args.port)
+    app.listen(args.port, address=ip)
+
+    # print("Starting tornado server on port %i" % PORT)
+    tornado.ioloop.IOLoop.current().start()
 
 
 def load_json_file(filename):
@@ -79,29 +108,6 @@ def db_test(api):
     api.close()
     for e in foo:
         print(e.state)
-
-
-def main():
-    # establish database connection interface
-    api = Api(bind=database.base.engine)
-    # perform_db_tests(api)
-
-    # set_database_to_default(True)
-    # create_swtichable_db_entries(api)
-    # db_test(api)
-
-    ### create sender module
-    sender = RFSender(17)
-
-    # define handlers
-    app = tornado.web.Application([
-        (r"/interaction", InteractionHandler, dict(api=api, sender=sender)),
-        (r"/db", DBHandler, dict(api=api))
-    ])
-    app.listen(PORT)
-
-    # print("Starting tornado server on port %i" % PORT)
-    tornado.ioloop.IOLoop.current().start()
 
 
 if __name__ == '__main__':
