@@ -22,11 +22,10 @@ class DBHandler(tornado.web.RequestHandler):
         if fct == "get_available_switchables":
             answer = self.get_available_receivers()
 
-        print('sending message')
         self.write(answer.__dict__)
 
     def post(self):
-        db_request = json.loads(self.request.body)
+        db_request = json.loads(self.request.body.decode('utf-8'))
         fct = db_request['function']
 
         answer = Message()
@@ -63,9 +62,6 @@ class DBHandler(tornado.web.RequestHandler):
         if receiver is not None:
             if field == 'alias':
                 receiver.alias = value
-
-
-
             self.db_api.commit()
             self.db_api.close()
             answer.success = True

@@ -2,6 +2,7 @@ import sys, json, argparse
 
 import tornado.ioloop
 import tornado.web
+import tornado.options
 import tornado.websocket
 
 import database.base
@@ -18,6 +19,25 @@ class TestHandler(tornado.web.RequestHandler):
         self.write("Hi there")
 
 
+class Application(tornado.web.Application):
+    def __init__(self, api, rf_sender):
+        self.api = api
+        self.rf_sender = rf_sender
+        settings = {
+            "cookie_secret": "abcdefg",
+            "login_url": "/login",
+            "debug": True,
+            "xsrf_cookies": False
+        }
+
+        # ToDo set cookies to true once this whole bullshit has resolved
+        tornado.web.Application.__init__(self, [
+            tornado.web.url(r"/interaction", InteractionHandler, dict(api=self.api, sender=rf_sender)),
+            tornado.web.url(r"/db", DBHandler, dict(api=self.api)),
+            tornado.web.url(r"/", TestHandler)
+        ], **settings)
+
+
 def main():
     # parse command line args
     parser = argparse.ArgumentParser(description='Starts the command line for my house')
@@ -26,28 +46,20 @@ def main():
 
     # establish database connection interface
     api = Api(bind=database.base.engine)
-    # perform_db_tests(api)
 
     # set_database_to_default(True)
     # create_swtichable_db_entries(api)
     # db_test(api)
 
-    ### create sender module
+    # create sender module
     sender = RFSender(17)
 
-    # define handlers
-    app = tornado.web.Application([
-        (r"/interaction", InteractionHandler, dict(api=api, sender=sender)),
-        (r"/db", DBHandler, dict(api=api)),
-        (r"/", TestHandler)
-    ])
-
     ip = "0.0.0.0"
-    print("Starting server on", ip, args.port)
-    app.listen(args.port, address=ip)
+    # tornado.options.parse_command_line()
+    Application(api, sender).listen(args.port, address=ip)
 
-    # print("Starting tornado server on port %i" % PORT)
-    tornado.ioloop.IOLoop.current().start()
+    print("Starting server on", ip, args.port)
+    tornado.ioloop.IOLoop.instance().start()
 
 
 def load_json_file(filename):
