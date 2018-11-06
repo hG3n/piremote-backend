@@ -26,7 +26,7 @@ class DBHandler(tornado.web.RequestHandler):
         self.write(answer.__dict__)
 
     def post(self):
-        db_request = json.loads(self.request.body)
+        db_request = json.loads(self.request.body.decode("utf-8"))
         fct = db_request['function']
 
         answer = Message()
