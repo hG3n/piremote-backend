@@ -5,14 +5,21 @@ from .message import Message
 
 from database.models import tables
 
+from . import base_handler
 
-class DBHandler(tornado.web.RequestHandler):
+class DBHandler(base_handler.BaseHandler):
 
     def initialize(self, api):
         self.db_api = api
 
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Access-Control-Allow-Headers", "x-requested-with")
+        origin = self.request.headers.get('Origin')
+        if origin:
+            self.set_header('Access-Control-Allow-Origin', origin)
+
+        self.set_header("Access-Control-Allow-Headers",
+                        "x-requested-with, Content-Type, X-CSRF-Token, X-XSRF-Token, X-Xsrftoken, X-CSRFToken")
+
+        self.set_header('Access-Control-Allow-Credentials', 'true')
         self.set_header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS')
 
     def get(self):
@@ -22,11 +29,11 @@ class DBHandler(tornado.web.RequestHandler):
         if fct == "get_available_switchables":
             answer = self.get_available_receivers()
 
-        print('sending message')
         self.write(answer.__dict__)
 
     def post(self):
-        db_request = json.loads(self.request.body.decode("utf-8"))
+        db_request = json.loads(self.request.body.decode('utf-8'))
+
         fct = db_request['function']
 
         answer = Message()
@@ -63,9 +70,6 @@ class DBHandler(tornado.web.RequestHandler):
         if receiver is not None:
             if field == 'alias':
                 receiver.alias = value
-
-
-
             self.db_api.commit()
             self.db_api.close()
             answer.success = True
